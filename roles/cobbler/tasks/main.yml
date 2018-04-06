@@ -1,0 +1,141 @@
+---
+- name: deactivate selinux
+  selinux:
+    state: disabled
+- name: upgrade all packages
+  yum:
+    name: "*"
+    state: latest
+- name: install ntp
+  yum:
+    name: ntp
+    state: latest
+- name: copy ntp config
+  template:
+    src: ntp.j2
+    dest: /etc/ntp.conf
+  notify:
+    - restart ntp service
+- name: generate ssh keys
+  user:
+    name: root
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+- name: set variable ssh_key
+  command: cat /root/.ssh/id_rsa.pub
+  register: result
+- name: set facts
+  set_fact: ssh_key="{{ result.stdout }}"
+- name: copy debmirror
+  copy:
+    src: debmirror
+    dest: /usr/bin/debmirror
+- name: install epel
+  yum:
+    name: epel-release
+    state: latest
+- name: install everything else
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - cobbler
+    - cobbler-web
+    - syslinux
+    - pykickstart
+    - xinetd
+    - bind
+    - dhcp
+    - fence-agents
+    - koan
+    - python-ethtool
+- name: disable firewall
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+- name: copy ssh config
+  copy:
+    src: ssh_config
+    dest: /root/.ssh/config
+- name: copy cobbler settings
+  template:
+    src: settings.j2
+    dest: /etc/cobbler/settings
+    owner: root
+    group: root
+    mode: 0644
+- name: copy dhcp template
+  template:
+    src: dhcp_template.j2
+    dest: /etc/cobbler/dhcp.template
+    owner: root
+    group: root
+    mode: 0644
+- name: copy named template
+  template:
+    src: named_template.j2
+    dest: /etc/cobbler/named.template
+- name: copy tftp template
+  template:
+    src: tftp.j2
+    dest: /etc/xinetd.d/tftp
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart xinetd service
+- name: copy kickstart
+  template:
+    src: nebula_ks.j2
+    dest: /var/lib/cobbler/kickstarts/nebula.ks
+- name: copy cobbler.py
+  copy:
+    src: cobbler.py
+    dest: /etc/ansible/cobbler.py
+    mode: 0755
+- name: copy cobbler.ini
+  copy:
+    src: cobbler.ini
+    dest: /etc/ansible/cobbler.ini
+- name: enable services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - httpd
+    - rsyncd
+    - cobblerd
+    - xinetd
+- name: copy snippet find_hd
+  copy:
+    src: find_hds
+    dest: /var/lib/cobbler/snippets/find_hds
+- name: copy snippet install_koan
+  copy:
+    src: post_install_koan
+    dest: /var/lib/cobbler/snippets/post_install_koan
+- name: copy snippet root_public_key
+  template:
+    src: public_root_key.j2
+    dest: /var/lib/cobbler/snippets/public_root_key
+- name: run cobbler get-loaders
+  command: /bin/cobbler get-loaders
+  notify: cobbler sync
+- name: get iso
+  get_url:
+    url: http://centos-mirror.rbc.ru/pub/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1611.iso
+    dest: /tmp
+- name: mount iso
+  shell: mount /tmp/CentOS-7-x86_64-Minimal-1611.iso /mnt -o loop
+- name: cobbler import iso
+  command: /bin/cobbler import --arch=x86_64 --path=/mnt --name=CentOS7
+- name: add repo
+  command: /bin/cobbler repo add --name=epel-release --arch=x86_64 --breed=yum --keep-updated=Y --mirror=https://dl.fedoraproject.org/pub/epel/7/x86_64/ --rpm-list="koan python-simplejson" --mirror-locally=Y --priority=1
+- name: sync repo
+  command: /bin/cobbler reposync
+- name: add repo to profile
+  command: /bin/cobbler profile edit --name=CentOS7-x86_64 --repos="epel-release" --kickstart=/var/lib/cobbler/kickstarts/nebula.ks
+- name: cobbler add system
+  command: /bin/cobbler system add --name=default --profile=CentOS7-x86_64 --kickstart=/var/lib/cobbler/kickstarts/nebula.ks
+  notify: cobbler sync

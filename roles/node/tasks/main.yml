@@ -1,0 +1,16 @@
+---
+# tasks file for node
+- name: install opennebula node
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - opennebula-node-kvm
+    - libvirt-python
+    - python-lxml
+- name: enable and start libvirt
+  service:
+    name: libvirtd
+    enabled: yes
+    state: started
+

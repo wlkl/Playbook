@@ -1,0 +1,43 @@
+---
+- name: restart host
+  shell: nohup bash -c "sleep 2s && reboot" &
+  async: 0
+  poll: 0
+  ignore_errors: true
+  when: inventory_hostname in groups['nodes']
+- name: waiting for hosts come back
+  local_action: wait_for host={{ inventory_hostname }} state=started delay=300 timeout=1000 port=22
+- name: upgrade all packages
+  yum:
+    name: "*"
+    state: latest
+- name: copy hosts file
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: 0644
+- name: install ntp
+  yum:
+    name: ntp
+    state: latest
+- name: copy ntp config
+  template:
+    src: ntp.j2
+    dest: /etc/ntp.conf
+- name: restart ntp service
+  service:
+    name: ntpd
+    state: restarted
+- name: install epel release
+  yum:
+    name: epel-release
+    state: latest
+- name: add opennebula repo
+  copy:
+    src: opennebula.repo
+    dest: /etc/yum.repos.d/opennebula.repo
+    owner: root
+    group: root
+    mode: 0644

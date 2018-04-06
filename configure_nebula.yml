@@ -1,0 +1,8 @@
+---
+- hosts: nvm
+  tasks:
+    - name: add nodes
+      command: onehost create "{{ item }}" -i kvm -v kvm
+      become: true
+      become_user: oneadmin
+      with_items: "{{groups.nodes}}"

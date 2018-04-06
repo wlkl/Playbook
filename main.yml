@@ -1,0 +1,5 @@
+---
+# main playbook
+- include: install_nebula.yml
+- include: nodes_copy_keys.yml
+- include: configure_nebula.yml

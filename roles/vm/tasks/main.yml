@@ -1,0 +1,13 @@
+---
+- name: create virtual disk for vm
+  command: qemu-img create -f qcow2 -o preallocation=metadata /var/lib/libvirt/images/vm.img 4G
+- name: change permissions on disk file
+  file: path=/var/lib/libvirt/images/vm.img mode=0777
+- name: define vm
+  virt: name={{ virtname }}
+        command=define
+        xml={{ lookup('template', 'image.xml.j2') }}
+- name: create and start vm
+  virt: name={{ virtname }}
+        command=create
+        xml={{ lookup('template', 'image.xml.j2') }}

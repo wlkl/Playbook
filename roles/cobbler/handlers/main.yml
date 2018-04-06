@@ -1,0 +1,11 @@
+---
+- name: restart xinetd service
+  service:
+    name: xinetd
+    state: restarted
+- name: cobbler sync
+  command: /bin/cobbler sync
+- name: restart ntp service
+  service:
+    name: ntpd
+    state: restarted

@@ -1,0 +1,8 @@
+PRIMDRIVE=`lsblk -dbn -I8 -oNAME,SIZE | sort -nk 2 | head -1 | awk '{print $1}'`
+
+echo "clearpart --all" >> /tmp/part-include
+echo "ignoredisk --only-use=$PRIMDRIVE" >> /tmp/part-include
+echo "part /boot --fstype xfs --size 250" >> /tmp/part-include
+echo "part biosboot --fstype xfs --size 1" >> /tmp/part-include
+echo "part swap --recommended" >> /tmp/part-include
+echo "part / --fstype xfs --size 4096 --grow" >> /tmp/part-include

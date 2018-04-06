@@ -1,0 +1,21 @@
+---
+# tasks file for mysql
+- name: instal mysql server
+  yum:
+    name: "{{ item  }}"
+    state: latest
+  with_items:
+    - mariadb-server
+    - MySQL-python
+- name: enable and start mysql server
+  service:
+    name: mariadb
+    enabled: yes
+    state: started
+- name: create mysql user
+  mysql_user:
+    name: oneadmin
+    priv: "opennebula.*:ALL,GRANT"
+    password: oneadmin
+- name: set parametres in mysql
+  shell: mysql -e "SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;"

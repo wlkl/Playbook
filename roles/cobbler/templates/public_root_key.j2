@@ -1,0 +1,7 @@
+# Install public key for root
+cd /root
+mkdir --mode=700 .ssh
+cat >> .ssh/authorized_keys << "PUBLIC_KEY"
+{{ ssh_key }}
+PUBLIC_KEY
+chmod 600 .ssh/authorized_keys

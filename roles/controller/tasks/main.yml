@@ -1,0 +1,124 @@
+---
+# install controller components
+- name: install opennebula
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+     - opennebula-server
+     - opennebula-sunstone
+     - opennebula-ruby
+     - opennebula-gate
+     - opennebula-flow
+     - gcc-c++
+     - gcc
+     - sqlite-devel
+     - curl-devel
+     - mysql-devel
+     - openssl-devel
+     - ruby-devel
+     - make
+- name: install rack gem
+  gem:
+    name: rack
+    version: "< 2.0.0"
+    include_dependencies: yes
+    user_install: no
+    state: present
+- name: install zendesk_api gem
+  gem:
+    name: zendesk_api
+    version: "< 1.14.0"
+    include_dependencies: yes
+    user_install: no
+    state: present
+- name: install net-ldap gem
+  gem:
+    name: net-ldap
+    version: "< 0.13"
+    include_dependencies: yes
+    user_install: no
+    state: present
+- name: install treetop gem
+  gem:
+    name: treetop
+    version: ">= 1.6.3"
+    include_dependencies: yes
+    user_install: no
+    state: present
+- name: install aws-sdk gem
+  gem:
+    name: aws-sdk
+    version: "= 1.66"
+    include_dependencies: yes
+    user_install: no
+    state: present
+- name: install all over gems
+  gem:
+    name: "{{ item }}"
+    include_dependencies: yes
+    user_install: no
+    state: latest
+  with_items:
+     - tilt
+     - rack-protection
+     - sinatra
+     - eventmachine
+     - daemons
+     - thin
+     - memcache-client
+     - sqlite3
+     - sequel
+     - xml-simple
+     - amazon-ec2
+     - uuidtools
+     - curb
+     - builder
+     - trollop
+     - parse-cron
+     - ox
+     - mysql
+     - jmespath
+     - aws-sdk-core
+     - aws-sdk-resources
+     - aws-sdk
+     - configparser
+     - addressable
+     - faraday_middleware
+     - azure-core
+     - json
+     - systemu
+     - thor
+     - macaddr
+     - uuid
+     - azure
+- name: copy sunstone-server config file
+  template:
+    src: sunstone-server.conf.j2
+    dest: /etc/one/sunstone-server.conf
+- name: copy oned.conf
+  template:
+    src: oned.conf.j2
+    dest: /etc/one/oned.conf
+- name: enable and start opennebula service
+  service:
+    name: opennebula
+    enabled: yes
+    state: started
+- name: pause 10 sec
+  pause:
+    seconds: 10
+- name: enable and start opennebula-sunstone service
+  service:
+    name: opennebula-sunstone
+    enabled: yes
+    state: started
+- name: get ssh keys
+  shell: ssh-keyscan {{ hosts }} >> /var/lib/one/.ssh/known_hosts
+  become: true
+  become_user: oneadmin
+- name: archive ssh dir
+  command: tar czvf ssh.tgz .ssh chdir=/var/lib/one
+- name: fetch ssh.tgz
+  fetch: src=/var/lib/one/ssh.tgz dest=/tmp
+

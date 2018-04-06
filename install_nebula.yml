@@ -1,0 +1,18 @@
+---
+- hosts: nodes
+  roles:
+    - node
+- hosts: node1
+  tasks:
+    - name: wait until host is up
+      local_action:
+        wait_for port=22 state=started host=nvm delay=300 timeout=1000
+  roles:
+    - vm
+- hosts: nvm
+  roles:
+    - sysprep
+    - mysql
+    - controller
+
+

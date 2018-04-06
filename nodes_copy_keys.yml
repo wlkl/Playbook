@@ -1,0 +1,9 @@
+---
+- hosts: nodes
+  tasks:
+    - name: unarchive ssh.rgz
+      unarchive:
+        src: /tmp/{{ virtip }}/var/lib/one/ssh.tgz
+        dest: /var/lib/one/
+        owner: oneadmin
+        group: oneadmin
