@@ -124,7 +124,7 @@
   notify: cobbler sync
 - name: get iso
   get_url:
-    url: http://centos-mirror.rbc.ru/pub/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1611.iso
+    url: http://centos-mirror.rbc.ru/pub/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1708.iso
     dest: /tmp
 - name: mount iso
   shell: mount /tmp/CentOS-7-x86_64-Minimal-1611.iso /mnt -o loop
